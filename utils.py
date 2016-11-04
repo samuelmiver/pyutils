@@ -71,17 +71,23 @@ def dic_generator(filename, key_index, value_index=None, header=False):
     return results
 
 
-def str_dic_generator(filename, key_index, value_index = None, header=False):
+def str_dic_generator(filename, key_index, value_index = None, header=False, split_by=None):
     """
     Given a file, returns a dictionary where {key_index:key_index+1}
     """
+    if header==True:
+        header=1
+
     results = {}
     with open(filename, 'r') as fi:
         for line in fi:
-            if header:
-                header=False
+            if header != 0:
+                header-=1
             else:
-                line = line.strip().split()
+                if split_by:
+                    line = line.strip().split(split_by)
+                else:
+                    line = line.strip().split()
                 if not value_index:
                     results[line[key_index]] = line[key_index+1]
                 else:
@@ -290,9 +296,32 @@ def load_multifasta(inFile):
     return your_sequences
 
 
+def load_multifasta_info(inFile):
+    """ Return a dictionary wit the sequences from a multifasta file """
+    your_sequences = {}
+    handle = open(inFile, 'rU')
+    for record in SeqIO.parse(handle, "fasta"):
+        your_sequences[record.id+'//'+record.description]=str(record.seq)
+    handle.close()
+    return your_sequences
+
+
+def load_genome(genome):
+    # Determine the file type:
+    if genome.endswith('gb'):
+        tipo = 'genbank'
+    else:
+        tipo = 'fasta'
+    handle = open(genome, 'rU')
+    for record in SeqIO.parse(handle, tipo):
+        return str(record.seq)
+    handle.close()
+
+
 def lists2dict(listA, listB):
     """ Given two lists of the same length, merge them in one dictionary """
     return dict(zip(listA, listB))
+
 
 def remove_column(array, index):
     """ Remove the index column from a numpy array, index can be a list"""
