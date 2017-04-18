@@ -318,6 +318,23 @@ def load_genome(genome):
     handle.close()
 
 
+def load_annotation(inFile):
+    annotation = {}
+    with open(inFile) as fi:
+        for line in fi:
+            line = line.strip().split()
+            ide  = line[0]
+            if len(line[1:]) == 2:
+                st, en = sorted([int(x) for x in line[1:]])
+                l      = [st, en]
+            else:
+                st, en = sorted([int(x) for x in line[1:] if x not in ['+', '-']])
+                strand = [str(x) for x in line[1:] if x in ['+', '-']]
+                l      = [st, en] + strand
+            annotation[ide] = l
+    return annotation
+
+
 def lists2dict(listA, listB):
     """ Given two lists of the same length, merge them in one dictionary """
     return dict(zip(listA, listB))
@@ -328,3 +345,9 @@ def remove_column(array, index):
 
     return np.delete(array, np.s_[index], axis=1)
 
+
+##### FOR SEQUENCES
+
+def reverse_complement(seq):
+    complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
+    return ''.join([complement[k] for k in seq][::-1])
