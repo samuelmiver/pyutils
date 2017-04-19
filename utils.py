@@ -71,12 +71,12 @@ def dic_generator(filename, key_index, value_index=None, header=False):
     return results
 
 
-def str_dic_generator(filename, key_index, value_index = None, header=False, split_by=None):
+def str_dic_generator(filename, key_index, value_index=None, header=False, split_by=None):
     """
     Given a file, returns a dictionary where {key_index:key_index+1}
     """
     if header==True:
-        header=1
+        header = 1
 
     results = {}
     with open(filename, 'r') as fi:
@@ -88,10 +88,10 @@ def str_dic_generator(filename, key_index, value_index = None, header=False, spl
                     line = line.strip().split(split_by)
                 else:
                     line = line.strip().split()
-                if not value_index:
-                    results[line[key_index]] = line[key_index+1]
-                else:
+                if value_index != key_index+1:
                     results[line[key_index]] = line[value_index]
+                else:
+                    results[line[key_index]] = line[key_index+1]
     return results
 
 
