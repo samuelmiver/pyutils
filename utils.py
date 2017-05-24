@@ -79,12 +79,12 @@ def new_dic_generator(filename, key_index, value_index):
         results = {int(k):float(v) for k, v in [l.split()[0:2] for l in fi.readlines()]}
     return results
 
-def str_dic_generator(filename, key_index, value_index = None, header=False, split_by=None):
+def str_dic_generator(filename, key_index, value_index=None, header=False, split_by=None):
     """
     Given a file, returns a dictionary where {key_index:key_index+1}
     """
     if header==True:
-        header=1
+        header = 1
 
     results = {}
     with open(filename, 'r') as fi:
@@ -96,10 +96,10 @@ def str_dic_generator(filename, key_index, value_index = None, header=False, spl
                     line = line.strip().split(split_by)
                 else:
                     line = line.strip().split()
-                if value_index == None:
-                    results[line[key_index]] = line[key_index+1]
-                else:
+                if value_index !=  key_index+1:
                     results[line[key_index]] = line[value_index]
+                else:
+                    results[line[key_index]] = line[key_index+1]
     return results
 
 
@@ -326,6 +326,23 @@ def load_genome(genome):
     handle.close()
 
 
+def load_annotation(inFile):
+    annotation = {}
+    with open(inFile) as fi:
+        for line in fi:
+            line = line.strip().split()
+            ide  = line[0]
+            if len(line[1:]) == 2:
+                st, en = sorted([int(x) for x in line[1:]])
+                l      = [st, en]
+            else:
+                st, en = sorted([int(x) for x in line[1:] if x not in ['+', '-']])
+                strand = [str(x) for x in line[1:] if x in ['+', '-']]
+                l      = [st, en] + strand
+            annotation[ide] = l
+    return annotation
+
+
 def lists2dict(listA, listB):
     """ Given two lists of the same length, merge them in one dictionary """
     return dict(zip(listA, listB))
@@ -336,3 +353,9 @@ def remove_column(array, index):
 
     return np.delete(array, np.s_[index], axis=1)
 
+
+##### FOR SEQUENCES
+
+def reverse_complement(seq):
+    complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
+    return ''.join([complement[k] for k in seq][::-1])
