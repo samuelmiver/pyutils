@@ -369,4 +369,5 @@ def remove_column(array, index):
 
 def reverse_complement(seq):
     complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
-    return ''.join([complement[k] for k in seq][::-1])
+
+    return ''.join([complement[k] if k in complement else 'N' for k in seq][::-1])
