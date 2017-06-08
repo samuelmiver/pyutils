@@ -8,6 +8,12 @@ from Bio import SeqIO
 
 # Several easy scripts in order to perform simple processes
 
+def splitn_str(your_string, n):
+    """ Given a string, returns a list with that string splitted each n characters """
+
+    return [your_string[i:i+n] for i in range(0, len(your_string), n)]
+
+
 def indexes(lista, values):
     """
     Given a list and its values return a list with the indexes of the values
