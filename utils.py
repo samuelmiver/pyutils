@@ -85,7 +85,7 @@ def new_dic_generator(filename, key_index, value_index):
         results = {int(k):float(v) for k, v in [l.split()[0:2] for l in fi.readlines()]}
     return results
 
-def str_dic_generator(filename, key_index, value_index=None, header=False, split_by=None):
+def str_dic_generator(filename, key_index, value_index=False, header=False, split_by=None):
     """
     Given a file, returns a dictionary where {key_index:key_index+1}
     """
@@ -102,7 +102,7 @@ def str_dic_generator(filename, key_index, value_index=None, header=False, split
                     line = line.strip().split(split_by)
                 else:
                     line = line.strip().split()
-                if value_index !=  key_index+1:
+                if value_index:
                     results[line[key_index]] = line[value_index]
                 else:
                     results[line[key_index]] = line[key_index+1]
