@@ -102,7 +102,7 @@ def str_dic_generator(filename, key_index, value_index=False, header=False, spli
                     line = line.strip().split(split_by)
                 else:
                     line = line.strip().split()
-                if value_index:
+                if value_index or value_index == 0:
                     results[line[key_index]] = line[value_index]
                 else:
                     results[line[key_index]] = line[key_index+1]
@@ -359,6 +359,18 @@ def load_annotation(inFile):
             annotation[ide] = l
     return annotation
 
+def gb2annotation(inFile):
+    annotation = {}
+    for rec in SeqIO.parse(inFile, "genbank"):
+        if rec.features:
+            for feature in rec.features:
+                if feature.type == "CDS":
+                    strand = '-' if feature.location.strand==-1 else '+'
+                    start  = int(feature.location.start)
+                    stop   = int(feature.location.end)
+                    genename = feature.qualifiers["locus_tag"][0]
+                    annotation[genename] = [start, stop, strand]
+    return annotation
 
 def lists2dict(listA, listB):
     """ Given two lists of the same length, merge them in one dictionary """
