@@ -361,6 +361,7 @@ def load_annotation(inFile):
 
 def gb2annotation(inFile):
     annotation = {}
+    c = 1
     for rec in SeqIO.parse(inFile, "genbank"):
         if rec.features:
             for feature in rec.features:
@@ -368,7 +369,14 @@ def gb2annotation(inFile):
                     strand = '-' if feature.location.strand==-1 else '+'
                     start  = int(feature.location.start)
                     stop   = int(feature.location.end)
-                    genename = feature.qualifiers["locus_tag"][0]
+                    try:
+                        genename = feature.qualifiers["locus_tag"][0]
+                    except:
+                        try:
+                            genename = feature.qualifiers["gene"][0]
+                        except:
+                            genename = 'unknown'+str(c)
+                            c += 1
                     annotation[genename] = [start, stop, strand]
     return annotation
 
