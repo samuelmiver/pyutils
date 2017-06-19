@@ -37,6 +37,23 @@ def list_generator(filename, index=0):
             results.append(line[index])
     return results
 
+def list_NA_generator(filename, index=0):
+    """
+    Given a file, returns a set with all the values from the column[index]
+    """
+    results = []
+    with open(filename, 'r') as fi:
+        for line in fi:
+            line = line.strip().split()
+            try:
+                if len(line[index]) > 0:
+                    results.append(line[0])
+            except:
+                pass
+
+
+    return results
+
 
 def ins2positions(filename):
     """
