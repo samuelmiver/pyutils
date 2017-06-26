@@ -353,9 +353,9 @@ def load_genome_DB(organism):
     """Uses load_genome function to return the sequence of the organism selected"""
 
     try:
-        genome = load_genome('../smprots_DB/genomes/'+organism+'.fasta')
+        genome = load_genome('/home/smiravet/crg/dbs/smprots_DB/genomes/'+organism+'.fasta')
     except:
-        genome = load_genome('../smprots_DB/genomes/'+organism+'.gb')
+        genome = load_genome('/home/smiravet/crg/dbs/smprots_DB/genomes/'+organism+'.gb')
 
     return genome
 
