@@ -3,10 +3,21 @@
 import subprocess
 import matplotlib.pyplot as plt
 import collections
+import scipy
+import pylab
 import numpy as np
 from Bio import SeqIO
+from matplotlib.patches import Circle, Ellipse
+from itertools import chain
+from collections import Iterable
 
 # Several easy scripts in order to perform simple processes
+
+def rsquared(x, y):
+    """ Return R^2 where x and y are array-like."""
+    slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(x, y)
+    return r_value**2
+
 
 def splitn_str(your_string, n):
     """ Given a string, returns a list with that string splitted each n characters """
@@ -50,8 +61,6 @@ def list_NA_generator(filename, index=0):
                     results.append(line[0])
             except:
                 pass
-
-
     return results
 
 
@@ -376,6 +385,24 @@ def load_annotation(inFile):
             annotation[ide] = l
     return annotation
 
+
+def strand_load_annotation(inFile):
+    annotation = {}
+    with open(inFile) as fi:
+        for line in fi:
+            line = line.strip().split()
+            ide  = line[0]
+            if len(line[1:]) == 2:
+                st, en = [int(x) for x in line[1:]]
+                l      = [st, en]
+            else:
+                st, en = [int(x) for x in line[1:] if x not in ['+', '-']]
+                strand = [str(x) for x in line[1:] if x in ['+', '-']]
+                l      = [st, en] + strand
+            annotation[ide] = l
+    return annotation
+
+
 def gb2annotation(inFile):
     annotation = {}
     c = 1
@@ -419,6 +446,132 @@ def errorfill(x, y, yerr, color=None, alpha_fill=0.3, ax=None, label=None):
         ymin, ymax = yerr
     ax.plot(x, y, color=color, label=label)
     ax.fill_between(x, ymax, ymin, color=color, alpha=alpha_fill)
+
+
+# VENN 4
+
+alignment = {'horizontalalignment':'center', 'verticalalignment':'baseline'}
+
+def get_labels(data, fill="number"):
+    """
+    to get a dict of labels for groups in data
+    input
+      data: data to get label for
+      fill = ["number"|"logic"|"both"], fill with number, logic label, or both
+    return
+      labels: a dict of labels for different sets
+    example:
+    In [12]: get_labels([range(10), range(5,15), range(3,8)], fill="both")
+    Out[12]:
+    {'001': '001: 0',
+     '010': '010: 5',
+     '011': '011: 0',
+     '100': '100: 3',
+     '101': '101: 2',
+     '110': '110: 2',
+     '111': '111: 3'}
+    """
+
+    N = len(data)
+
+    sets_data = [set(data[i]) for i in range(N)]  # sets for separate groups
+    s_all = set(chain(*data))                             # union of all sets
+
+    # bin(3) --> '0b11', so bin(3).split('0b')[-1] will remove "0b"
+    set_collections = {}
+    for n in range(1, 2**N):
+        key = bin(n).split('0b')[-1].zfill(N)
+        value = s_all
+        sets_for_intersection = [sets_data[i] for i in range(N) if  key[i] == '1']
+        sets_for_difference = [sets_data[i] for i in range(N) if  key[i] == '0']
+        for s in sets_for_intersection:
+            value = value & s
+        for s in sets_for_difference:
+            value = value - s
+        set_collections[key] = value
+
+    if fill == "number":
+        labels = {k: len(set_collections[k]) for k in set_collections}
+    elif fill == "logic":
+        labels = {k: k for k in set_collections}
+    elif fill == "both":
+        labels = {k: ("%s: %d" % (k, len(set_collections[k]))) for k in set_collections}
+    else:  # invalid value
+        raise Exception("invalid value for fill")
+    return labels
+
+
+def venn4(data=None, names=None, fill="number", show_names=True, show_plot=True, **kwds):
+
+    if (data is None) or len(data) != 4:
+        raise Exception("length of data should be 4!")
+    if (names is None) or (len(names) != 4):
+        names = ("set 1", "set 2", "set 3", "set 4")
+
+    labels = get_labels(data, fill=fill)
+
+    # set figure size
+    if 'figsize' in kwds and len(kwds['figsize']) == 2:
+        # if 'figsize' is in kwds, and it is a list or tuple with length of 2
+        figsize = kwds['figsize']
+    else: # default figure size
+        figsize = (10, 10)
+
+    # set colors for different Circles or ellipses
+    if 'colors' in kwds and isinstance(kwds['colors'], Iterable) and len(kwds['colors']) >= 4:
+        colors = kwds['colors']
+    else:
+        colors = ['r', 'g', 'b', 'c']
+
+    # draw ellipse, the coordinates are hard coded in the rest of the function
+    fig = pylab.figure(figsize=figsize)   # set figure size
+    ax = fig.gca()
+    patches = []
+    width, height = 170, 110  # width and height of the ellipses
+    patches.append(Ellipse((170, 170), width, height, -45 , color=colors[0], alpha=0.5))
+    patches.append(Ellipse((200, 200), width, height, -45 , color=colors[1], alpha=0.5))
+    patches.append(Ellipse((200, 200), width, height, -135, color=colors[2], alpha=0.5))
+    patches.append(Ellipse((230, 170), width, height, -135, color=colors[3], alpha=0.5))
+    for e in patches:
+        ax.add_patch(e)
+    ax.set_xlim(80, 320); ax.set_ylim(80, 320)
+    ax.set_xticks([]); ax.set_yticks([]);
+    ax.set_aspect("equal")
+
+    ### draw text
+    # 1
+    pylab.text(120, 200, labels['1000'], fontsize=20, **alignment)
+    pylab.text(280, 200, labels['0100'], fontsize=20, **alignment)
+    pylab.text(155, 250, labels['0010'], fontsize=20, **alignment)
+    pylab.text(245, 250, labels['0001'], fontsize=20, **alignment)
+    # 2
+    pylab.text(200, 115, labels['1100'], fontsize=20, **alignment)
+    pylab.text(140, 225, labels['1010'], fontsize=20, **alignment)
+    pylab.text(145, 155, labels['1001'], fontsize=20, **alignment)
+    pylab.text(255, 155, labels['0110'], fontsize=20, **alignment)
+    pylab.text(260, 225, labels['0101'], fontsize=20, **alignment)
+    pylab.text(200, 240, labels['0011'], fontsize=20, **alignment)
+    # 3
+    pylab.text(235, 205, labels['0111'], fontsize=20, **alignment)
+    pylab.text(165, 205, labels['1011'], fontsize=20, **alignment)
+    pylab.text(225, 135, labels['1101'], fontsize=20, **alignment)
+    pylab.text(175, 135, labels['1110'], fontsize=20, **alignment)
+    # 4
+    pylab.text(200, 175, labels['1111'], fontsize=20, **alignment)
+    # names of different groups
+    if show_names:
+        pylab.text(110, 110, names[0], fontsize=20, **alignment)
+        pylab.text(290, 110, names[1], fontsize=20, **alignment)
+        pylab.text(130, 275, names[2], fontsize=20, **alignment)
+        pylab.text(270, 275, names[3], fontsize=20, **alignment)
+
+    leg = ax.legend([names[0], names[2], names[3], names[1]] , loc='best', fancybox=True)
+    leg.get_frame().set_alpha(0.5)
+
+    if show_plot:
+        pylab.show()
+
+
 
 ##### FOR SEQUENCES
 
