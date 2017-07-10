@@ -501,7 +501,7 @@ def get_labels(data, fill="number"):
     return labels
 
 
-def venn4(data=None, names=None, fill="number", show_names=True, show_plot=True, **kwds):
+def venn4(data=None, names=None, total=None, fill="number", show_names=True, show_plot=True, **kwds):
 
     if (data is None) or len(data) != 4:
         raise Exception("length of data should be 4!")
@@ -521,7 +521,7 @@ def venn4(data=None, names=None, fill="number", show_names=True, show_plot=True,
     if 'colors' in kwds and isinstance(kwds['colors'], Iterable) and len(kwds['colors']) >= 4:
         colors = kwds['colors']
     else:
-        colors = ['r', 'g', 'b', 'c']
+        colors = ['r', 'g', 'b', 'c', 'grey']
 
     # draw ellipse, the coordinates are hard coded in the rest of the function
     fig = pylab.figure(figsize=figsize)   # set figure size
@@ -532,9 +532,12 @@ def venn4(data=None, names=None, fill="number", show_names=True, show_plot=True,
     patches.append(Ellipse((200, 200), width, height, -45 , color=colors[1], alpha=0.5))
     patches.append(Ellipse((200, 200), width, height, -135, color=colors[2], alpha=0.5))
     patches.append(Ellipse((230, 170), width, height, -135, color=colors[3], alpha=0.5))
+
+    patches.append(Circle((200, 290), 20, color=colors[4], alpha=0.5))
+
     for e in patches:
         ax.add_patch(e)
-    ax.set_xlim(80, 320); ax.set_ylim(80, 320)
+    ax.set_xlim(80, 340); ax.set_ylim(80, 340)
     ax.set_xticks([]); ax.set_yticks([]);
     ax.set_aspect("equal")
 
@@ -554,10 +557,15 @@ def venn4(data=None, names=None, fill="number", show_names=True, show_plot=True,
     # 3
     pylab.text(235, 205, labels['0111'], fontsize=20, **alignment)
     pylab.text(165, 205, labels['1011'], fontsize=20, **alignment)
-    pylab.text(225, 135, labels['1101'], fontsize=20, **alignment)
-    pylab.text(175, 135, labels['1110'], fontsize=20, **alignment)
+    pylab.text(225, 135, labels['1110'], fontsize=20, **alignment)
+    pylab.text(175, 135, labels['1101'], fontsize=20, **alignment)
     # 4
     pylab.text(200, 175, labels['1111'], fontsize=20, **alignment)
+
+    # Compute no classified
+    pylab.text(200, 288, str(len(total.difference(data[0], data[1], data[2], data[3]))), fontsize=20, **alignment)
+    pylab.text(200, 315, 'Undetected', fontsize=20, **alignment)
+
     # names of different groups
     if show_names:
         pylab.text(110, 110, names[0], fontsize=20, **alignment)
@@ -565,8 +573,8 @@ def venn4(data=None, names=None, fill="number", show_names=True, show_plot=True,
         pylab.text(130, 275, names[2], fontsize=20, **alignment)
         pylab.text(270, 275, names[3], fontsize=20, **alignment)
 
-    leg = ax.legend([names[0], names[2], names[3], names[1]] , loc='best', fancybox=True)
-    leg.get_frame().set_alpha(0.5)
+    # leg = ax.legend([names[0], names[2], names[3], names[1]] , loc='best', fancybox=True)
+    # leg.get_frame().set_alpha(0.5)
 
     if show_plot:
         pylab.show()
