@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os.path
 import subprocess
 import matplotlib.pyplot as plt
 import collections
@@ -7,11 +8,32 @@ import scipy
 import pylab
 import numpy as np
 from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+from Bio.Alphabet import IUPAC
+from Bio.SeqFeature import SeqFeature, FeatureLocation
 from matplotlib.patches import Circle, Ellipse
-from itertools import chain
+from itertools import chain, product
 from collections import Iterable
 
+
 # Several easy scripts in order to perform simple processes
+
+def combine_chars(l, n):
+    """ Return all the permutations of n length with chars in list l """
+
+    return [''.join(i) for i in product(l, repeat = n)]
+
+def occurrences(string, sub):
+    """ string count with overlapping occurrences """
+    count = start = 0
+    while True:
+        start = string.find(sub, start) + 1
+        if start > 0:
+            count+=1
+        else:
+            return count
+
 
 def rsquared(x, y):
     """ Return R^2 where x and y are array-like."""
@@ -52,15 +74,18 @@ def indexes(lista, values):
     return indexes
 
 
-def list_generator(filename, index=0):
+def list_generator(filename, index=0, header=False):
     """
     Given a file, returns a set with all the values from the column[index]
     """
     results = []
     with open(filename, 'r') as fi:
         for line in fi:
-            line = line.strip().split()
-            results.append(line[index])
+            if header:
+                header=False
+            else:
+                line = line.strip().split()
+                results.append(line[index])
     return results
 
 def list_NA_generator(filename, index=0):
@@ -363,7 +388,7 @@ def load_multifasta_info(inFile):
 
 def load_genome(genome):
     # Determine the file type:
-    if genome.endswith('gb'):
+    if genome.endswith('gb') or genome.endswith('gbk') or genome.endswith('genbank'):
         tipo = 'genbank'
     else:
         tipo = 'fasta'
@@ -375,10 +400,9 @@ def load_genome(genome):
 
 def load_genome_DB(organism):
     """Uses load_genome function to return the sequence of the organism selected"""
-
-    try:
+    if os.path.exists('/home/smiravet/crg/dbs/smprots_DB/genomes/'+organism+'.fasta'):
         genome = load_genome('/home/smiravet/crg/dbs/smprots_DB/genomes/'+organism+'.fasta')
-    except:
+    else:
         genome = load_genome('/home/smiravet/crg/dbs/smprots_DB/genomes/'+organism+'.gb')
 
     return genome
@@ -450,7 +474,7 @@ def remove_column(array, index):
     return np.delete(array, np.s_[index], axis=1)
 
 
-def errorfill(x, y, yerr, color=None, alpha_fill=0.3, ax=None, label=None):
+def errorfill(x, y, yerr, color=None, linewidth=None, alpha_fill=0.3, ax=None, label=None):
     ax = ax if ax is not None else plt.gca()
     if color is None:
         color = ax._get_lines.color_cycle.next()
@@ -459,7 +483,7 @@ def errorfill(x, y, yerr, color=None, alpha_fill=0.3, ax=None, label=None):
         ymax = y + yerr
     elif len(yerr) == 2:
         ymin, ymax = yerr
-    ax.plot(x, y, color=color, label=label)
+    ax.plot(x, y, color=color, label=label, linewidth=linewidth)
     ax.fill_between(x, ymax, ymin, color=color, alpha=alpha_fill)
 
 
@@ -602,3 +626,30 @@ def reverse_complement(seq):
     complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
 
     return ''.join([complement[k] if k in complement else 'N' for k in seq][::-1])
+
+
+def create_genbank(genome_sequence, annotation_dic, outfile, ide='your_genome', name='your_organism'):
+
+    # Create a sequence
+    sequence_string = genome
+    sequence_object = Seq(sequence_string, IUPAC.unambiguous_dna)
+
+    # Create a record
+    record = SeqRecord(sequence_object,
+            id=ide,
+            name=name,
+            description='Custom annotation file')
+
+    # Add annotation
+    for gene, values in annotation.iteritems():
+        if values[-1]=='+':
+            strand = 1
+        else:
+            strand = -1
+        feature = SeqFeature(FeatureLocation(start=values[0], end=values[1], strand=strand), type='CDS')
+        feature.qualifiers['gene']=gene
+        record.features.append(feature)
+
+    # Save as GenBank file
+    output_file = open(outfile, 'w')
+    SeqIO.write(record, output_file, 'genbank')
