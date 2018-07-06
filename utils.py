@@ -62,6 +62,29 @@ def splitn_str(your_string, n):
     return [your_string[i:i+n] for i in range(0, len(your_string), n)]
 
 
+def zstandarization(value, distribution=None):
+    """
+    Apply a z standarization to the value.
+    Value can be another distribution.
+    """
+    value = np.array([float(i) for i in value])
+    if distribution:
+        return (np.array(value)-np.mean(np.array(distribution)))/np.std(np.array(distribution))
+    else:
+        return (np.array(value)-np.mean(value))/np.std(value)
+
+def minmaxstandarization(value, distribution=None):
+    """
+    Apply a min max standarization to the value.
+    Value can be another distribution
+    """
+    value = np.array([float(i) for i in value])
+    if distribution:
+        return (np.array(value)-min(distribution))/(max(distribution)-min(distribution))
+    else:
+        return (np.array(value)-min(value))/(max(value)-min(value))
+
+
 def indexes(lista, values):
     """
     Given a list and its values return a list with the indexes of the values
@@ -653,3 +676,66 @@ def create_genbank(genome_sequence, annotation_dic, outfile, ide='your_genome', 
     # Save as GenBank file
     output_file = open(outfile, 'w')
     SeqIO.write(record, output_file, 'genbank')
+
+
+def genbank2annotation(genome):
+    annotation = {}
+    with open(genome, "rU") as input_handle:
+        for record in SeqIO.parse(input_handle, "genbank"):
+            for feat in record.features:
+                if feat.type in ['CDS', 'rRNA', 'tRNA', 'ncRNA']:
+                    annotation[feat.qualifiers['locus_tag'][0]] = [int(feat.location.start), int(feat.location.end), '+' if feat.location.strand==1 else '-']
+    return annotation
+
+
+def genbank2gff3(inFile, outFile):
+    """
+    Given a genome in genbank format <inFile>
+    creates a gff3 file <outFile>
+    format described here: https://www.ensembl.org/info/website/upload/gff3.html
+    """
+
+    fo = open(outFile, 'w')
+    fo.write('##gff-version 3\n')
+
+    with open(genome, "rU") as input_handle:
+        for record in SeqIO.parse(input_handle, "genbank"):
+            for feat in record.features:
+                if feat.type in ['CDS', 'rRNA', 'tRNA', 'ncRNA']:
+                    line = [record.id, '.', feat.type, feat.location.start, feat.location.end, '.', '+' if feat.location.strand==1 else '-', '.', 'ID=']
+                    fo.write('\t'.join([str(i) for i in line])+'\n')
+    fo.close()
+
+
+def fourier(distribution, Fs=100.0, Ts=1.0, binarize=True):
+    """
+    <distribution> your distribution
+    <Fs> sampling_rate
+    <Ts> time_rate
+    <binarize> transform distribution to 0 (nothing) 1 (something)
+    """
+
+    if binarize:
+        y = [1.0 if i>0.0 else i for i in distribution]
+    else:
+        y = distribution
+    t = np.arange(0,len(y),Ts) # time vector
+
+    n = len(y) # length of the signal
+    k = np.arange(n)
+    T = n/Fs
+    frq = k/T # two sides frequency range
+    frq = frq[range(n/2)] # one side frequency range
+
+    Y = np.fft.fft(y)/n # fft computing and normalization
+    Y = Y[range(n/2)]
+
+    plt.plot(t,y)
+    plt.xlabel('Time')
+    plt.ylabel('Amplitude')
+    plt.show()
+    plt.plot(frq,abs(Y),'r') # plotting the spectrum
+    plt.xlabel('Freq (Hz)')
+    plt.ylabel('|Y(freq)|')
+    plt.ylim(0, 0.1)
+    plt.show()
