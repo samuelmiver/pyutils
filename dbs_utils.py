@@ -7,7 +7,7 @@ from Bio.SeqFeature import SeqFeature, FeatureLocation
 
 def fastawriter(sequence, identifier, outfile):
     with open(outfile, 'w') as fo:
-        fo.write('>'+identifier+'\n'+sequence+'\n'
+        fo.write('>'+identifier+'\n'+sequence+'\n')
 
 
 def load_multifasta(inFile):
