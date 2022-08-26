@@ -9,7 +9,6 @@ import pylab
 import pickle
 import re
 import numpy as np
-import pandas as pd
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -30,13 +29,7 @@ def LoadDictionary(File):
         dic = pickle.load(myFile)
         myFile.close()
         return dic
-
-def save_xls(list_dfs, names, xls_path):
-    with pd.ExcelWriter(xls_path) as writer:
-        for n, df in enumerate(list_dfs):
-            df.to_excel(writer,names[n])
-        writer.save()
-
+    
 def reduce_mem_usage(props):
     start_mem_usg = props.memory_usage().sum() / 1024**2 
     print("Memory usage of properties dataframe is :",start_mem_usg," MB")
