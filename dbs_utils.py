@@ -2,7 +2,7 @@
 
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from Bio.Alphabet import IUPAC
+# from Bio.Alphabet import IUPAC
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 
 def fastawriter(sequence, identifier, outfile):
@@ -47,7 +47,8 @@ def create_genbank(genome_sequence, annotation_dic, outfile, ide='your_genome', 
 
     # Create a sequence
     sequence_string = genome_sequence
-    sequence_object = Seq(sequence_string, IUPAC.unambiguous_dna)
+    sequence_object = Seq(sequence_string)
+    # IUPAC.unambiguous_dna ## Removing outdated dependency
 
     # Create a record
     record = SeqRecord(sequence_object,
